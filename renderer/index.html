@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net;">
+    <title>Project Navigator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Master Password Modal -->
+    <div class="modal fade" id="passwordModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">
+                        <i class="bi bi-shield-lock me-2"></i>
+                        <span id="passwordModalTitle">Unlock Vault</span>
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <p id="passwordModalDesc" class="text-muted mb-3">Enter your master password to unlock the credential vault.</p>
+                    <form id="passwordForm">
+                        <div class="mb-3">
+                            <label for="masterPassword" class="form-label">Master Password</label>
+                            <input type="password" class="form-control" id="masterPassword" required autofocus>
+                        </div>
+                        <div class="mb-3 d-none" id="confirmPasswordGroup">
+                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirmPassword">
+                        </div>
+                        <div class="alert alert-danger d-none" id="passwordError"></div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-primary" id="passwordSubmit">Unlock</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vault Modal -->
+    <div class="modal fade" id="vaultModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-safe me-2"></i>Credential Vault</h5>
+                    <div class="ms-auto me-3">
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="lockVaultBtn">
+                            <i class="bi bi-lock"></i> Lock
+                        </button>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Category Tabs -->
+                    <ul class="nav nav-tabs mb-3" id="vaultTabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" data-category="all">All</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-category="RDP"><i class="bi bi-display"></i> RDP</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-category="VPS"><i class="bi bi-server"></i> VPS</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-category="Hosting"><i class="bi bi-cloud"></i> Hosting</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-category="API Keys"><i class="bi bi-key"></i> API</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-category="Database"><i class="bi bi-database"></i> DB</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-category="External App"><i class="bi bi-app-indicator"></i> Apps</a>
+                        </li>
+                    </ul>
+
+                    <!-- Credentials List -->
+                    <div id="credentialsList"></div>
+
+                    <!-- Add Credential Button -->
+                    <button type="button" class="btn btn-outline-primary mt-3" id="addCredentialBtn">
+                        <i class="bi bi-plus-lg"></i> Add Credential
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Credential Modal -->
+    <div class="modal fade" id="credentialFormModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="credentialFormTitle">Add Credential</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="credentialForm">
+                        <div class="mb-3">
+                            <label for="credCategory" class="form-label">Category</label>
+                            <select class="form-select" id="credCategory" required>
+                                <option value="RDP">RDP</option>
+                                <option value="VPS">VPS</option>
+                                <option value="Hosting">Hosting</option>
+                                <option value="API Keys">API Keys</option>
+                                <option value="Database">Database</option>
+                                <option value="External App">External App</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="credLabel" class="form-label">Label</label>
+                            <input type="text" class="form-control" id="credLabel" required placeholder="e.g., Production Server">
+                        </div>
+                        <div class="mb-3">
+                            <label for="credProject" class="form-label">Project (Optional)</label>
+                            <select class="form-select" id="credProject">
+                                <option value="">-- None --</option>
+                            </select>
+                        </div>
+
+                        <!-- Dynamic fields based on category -->
+                        <div id="dynamicFields"></div>
+
+                        <div class="mb-3">
+                            <label for="credSecret" class="form-label">Password / Secret</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="credSecret" required>
+                                <button type="button" class="btn btn-outline-secondary" id="toggleSecretVisibility">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="credNotes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="credNotes" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveCredentialBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Project Modal -->
+    <div class="modal fade" id="projectFormModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="projectFormTitle">Add Project</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="projectForm">
+                        <div class="mb-3">
+                            <label for="projectName" class="form-label">Project Name</label>
+                            <input type="text" class="form-control" id="projectName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="projectPath" class="form-label">Root Path</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="projectPath" required placeholder="E:\Projects\MyProject">
+                                <button type="button" class="btn btn-outline-secondary" id="browsePathBtn" title="Browse for folder">
+                                    <i class="bi bi-folder2-open"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="createFolderBtn" title="Create new folder">
+                                    <i class="bi bi-folder-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="projectClient" class="form-label">Client (Optional)</label>
+                            <input type="text" class="form-control" id="projectClient">
+                        </div>
+                        <div class="mb-3">
+                            <label for="projectPlatform" class="form-label">Platform (Optional)</label>
+                            <input type="text" class="form-control" id="projectPlatform" placeholder="e.g., Web, Desktop, Mobile">
+                        </div>
+                        <div class="mb-3">
+                            <label for="projectTags" class="form-label">Tags (comma-separated)</label>
+                            <input type="text" class="form-control" id="projectTags" placeholder="e.g., python, react, api">
+                        </div>
+                        <div class="mb-3">
+                            <label for="projectNotes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="projectNotes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveProjectBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal fade" id="exportModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-download me-2"></i>Export / Import</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs mb-3" id="exportImportTabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" data-tab="export">Export</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-tab="import">Import</a>
+                        </li>
+                    </ul>
+                    <div id="exportContent">
+                        <p class="text-muted">Export all projects as JSON. Note: Secrets are NOT exported for security.</p>
+                        <button type="button" class="btn btn-primary" id="doExportBtn">
+                            <i class="bi bi-download"></i> Export Projects
+                        </button>
+                        <textarea class="form-control mt-3 d-none" id="exportData" rows="10" readonly></textarea>
+                    </div>
+                    <div id="importContent" class="d-none">
+                        <p class="text-muted">Paste JSON data to import projects.</p>
+                        <textarea class="form-control" id="importData" rows="10" placeholder="Paste JSON here..."></textarea>
+                        <button type="button" class="btn btn-primary mt-3" id="doImportBtn">
+                            <i class="bi bi-upload"></i> Import
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h5 class="mb-0"><i class="bi bi-folder2-open me-2"></i>Projects</h5>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" class="form-control form-control-sm" id="projectSearch" placeholder="Search projects...">
+            </div>
+            <div class="sidebar-content" id="projectsList">
+                <!-- Projects loaded here -->
+            </div>
+            <div class="sidebar-footer">
+                <button type="button" class="btn btn-sm btn-outline-primary w-100" id="addProjectBtn">
+                    <i class="bi bi-plus-lg"></i> Add Project
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Welcome Screen -->
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="text-center">
+                    <i class="bi bi-folder2-open display-1 text-muted"></i>
+                    <h3 class="mt-3">Welcome to Project Navigator</h3>
+                    <p class="text-muted">Select a project from the sidebar or add a new one to get started.</p>
+                </div>
+            </div>
+
+            <!-- Project View -->
+            <div class="project-view d-none" id="projectView">
+                <!-- Project Header -->
+                <div class="project-header">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h4 class="mb-1" id="currentProjectName">Project Name</h4>
+                            <small class="text-muted" id="currentProjectPath">/path/to/project</small>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="openInExplorerBtn" title="Open in Explorer">
+                                <i class="bi bi-folder2"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="openInVSCodeBtn" title="Open in VS Code">
+                                <i class="bi bi-code-square"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="openTerminalBtn" title="Open Terminal">
+                                <i class="bi bi-terminal"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="editProjectBtn" title="Edit Project">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="deleteProjectBtn" title="Delete Project">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Tags -->
+                    <div class="mt-2" id="projectTags"></div>
+                </div>
+
+                <!-- File Browser -->
+                <div class="file-browser">
+                    <div class="file-browser-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="text" class="form-control form-control-sm" id="fileSearch" placeholder="Search files..." style="max-width: 200px;">
+                            <nav aria-label="breadcrumb" class="flex-grow-1">
+                                <ol class="breadcrumb mb-0" id="pathBreadcrumb"></ol>
+                            </nav>
+                        </div>
+                    </div>
+                    <div class="file-browser-content">
+                        <!-- Folder Tree -->
+                        <div class="folder-tree" id="folderTree"></div>
+                        <!-- File List -->
+                        <div class="file-list" id="fileList"></div>
+                    </div>
+                </div>
+
+                <!-- Project Details -->
+                <div class="project-details">
+                    <div class="accordion" id="projectDetailsAccordion">
+                        <!-- Links -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#linksCollapse">
+                                    <i class="bi bi-link-45deg me-2"></i>Links
+                                </button>
+                            </h2>
+                            <div id="linksCollapse" class="accordion-collapse collapse" data-bs-parent="#projectDetailsAccordion">
+                                <div class="accordion-body">
+                                    <div id="projectLinksList"></div>
+                                    <div class="mt-2">
+                                        <input type="text" class="form-control form-control-sm mb-2" id="newLinkLabel" placeholder="Label">
+                                        <div class="input-group input-group-sm">
+                                            <input type="url" class="form-control" id="newLinkUrl" placeholder="https://...">
+                                            <button type="button" class="btn btn-outline-primary" id="addLinkBtn">
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Notes -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#notesCollapse">
+                                    <i class="bi bi-sticky me-2"></i>Notes
+                                </button>
+                            </h2>
+                            <div id="notesCollapse" class="accordion-collapse collapse" data-bs-parent="#projectDetailsAccordion">
+                                <div class="accordion-body">
+                                    <p id="projectNotesDisplay" class="mb-0 text-muted">No notes.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Credentials -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#credentialsCollapse">
+                                    <i class="bi bi-key me-2"></i>Credentials
+                                </button>
+                            </h2>
+                            <div id="credentialsCollapse" class="accordion-collapse collapse" data-bs-parent="#projectDetailsAccordion">
+                                <div class="accordion-body">
+                                    <div id="projectCredentialsList"></div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="addProjectCredentialBtn">
+                                        <i class="bi bi-plus"></i> Add Credential
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer Toolbar -->
+    <footer class="app-footer">
+        <button type="button" class="btn btn-sm btn-outline-warning" id="vaultBtn">
+            <i class="bi bi-safe"></i> Vault
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="exportBtn">
+            <i class="bi bi-box-arrow-up"></i> Export/Import
+        </button>
+        <span class="ms-auto text-muted small" id="statusText">Ready</span>
+    </footer>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="appToast" class="toast" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto" id="toastTitle">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastBody"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/projects.js"></script>
+    <script src="js/files.js"></script>
+    <script src="js/vault.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

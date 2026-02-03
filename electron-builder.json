@@ -1,0 +1,31 @@
+{
+  "appId": "com.projectnavigator.app",
+  "productName": "Project Navigator",
+  "directories": {
+    "output": "dist"
+  },
+  "files": [
+    "main/**/*",
+    "preload/**/*",
+    "renderer/**/*",
+    "db/**/*",
+    "services/**/*",
+    "assets/**/*"
+  ],
+  "win": {
+    "target": "nsis",
+    "icon": "assets/icon.png"
+  },
+  "mac": {
+    "target": "dmg",
+    "icon": "assets/icon.png"
+  },
+  "linux": {
+    "target": "AppImage",
+    "icon": "assets/icon.png"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true
+  }
+}

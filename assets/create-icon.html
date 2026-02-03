@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+</head>
+<body>
+    <h1>Project Navigator Icon</h1>
+    <canvas id="canvas" width="256" height="256"></canvas>
+    <br><br>
+    <button onclick="downloadIcon()">Download Icon</button>
+    <p>Right-click the canvas and save as PNG, or click the button to download.</p>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const size = 256;
+
+        // Background with rounded corners
+        ctx.fillStyle = '#1a1a2e';
+        ctx.beginPath();
+        ctx.roundRect(0, 0, size, size, 30);
+        ctx.fill();
+
+        // Inner background
+        ctx.fillStyle = '#16213e';
+        ctx.beginPath();
+        ctx.roundRect(15, 15, size - 30, size - 30, 20);
+        ctx.fill();
+
+        // Folder base
+        ctx.fillStyle = '#e94560';
+        ctx.beginPath();
+        ctx.moveTo(45, 85);
+        ctx.lineTo(45, 190);
+        ctx.quadraticCurveTo(45, 200, 55, 200);
+        ctx.lineTo(195, 200);
+        ctx.quadraticCurveTo(205, 200, 205, 190);
+        ctx.lineTo(205, 105);
+        ctx.lineTo(145, 105);
+        ctx.lineTo(125, 85);
+        ctx.closePath();
+        ctx.fill();
+
+        // Folder front
+        ctx.fillStyle = '#ff6b81';
+        ctx.beginPath();
+        ctx.moveTo(45, 110);
+        ctx.lineTo(45, 190);
+        ctx.quadraticCurveTo(45, 200, 55, 200);
+        ctx.lineTo(195, 200);
+        ctx.quadraticCurveTo(205, 200, 205, 190);
+        ctx.lineTo(205, 110);
+        ctx.closePath();
+        ctx.fill();
+
+        // Key circle
+        ctx.fillStyle = '#ffc107';
+        ctx.beginPath();
+        ctx.arc(165, 155, 25, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Key hole
+        ctx.fillStyle = '#16213e';
+        ctx.beginPath();
+        ctx.arc(165, 150, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(161, 150, 8, 18);
+
+        // Key teeth
+        ctx.fillStyle = '#ffc107';
+        ctx.fillRect(115, 150, 50, 10);
+        ctx.fillRect(115, 150, 8, 20);
+        ctx.fillRect(130, 150, 8, 15);
+
+        function downloadIcon() {
+            const link = document.createElement('a');
+            link.download = 'icon.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>
